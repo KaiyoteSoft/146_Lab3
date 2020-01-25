@@ -1,0 +1,376 @@
+---
+title: "Lab 3"
+author: "Georgia Titcomb"
+date: "December 28, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set("~/Biology/146/Lab 3")
+library(car)
+library(ggplot2)
+```
+##Notes on Homework
+In order to ensure you get full marks on homeworks:
+
+1) Make sure your file is knitting correctly and that all necessary code and figures are showing.
+2) Upload BOTH your .rmd and your .html (or .pdf or .doc) files to gauchospace
+3) Add appropriate x and y labels to your figures (with units!)
+4) Avoid printing out entire datasets - this makes for unecessarily long and messy printouts.  Use your head(), summary(), and str() commands instead if you want to check a dataframe.  
+5) Comment out or delete lines that will prevent your markdown file from knitting.  These include the function View() and install.packages()
+6) Answer all written questions completely and thoroughly
+
+
+### Intro and Objectives
+## Exploring the Central Limit Theorem
+
+In class we discussed how to randomly sample from a distribution.  We will review that here!  Here is a list of some of the distributions you can sample from in R:
+
+1. rnorm() : Random sample from a normal distribution
+2. rexp() : Random sample from an exponential distribution
+3. rbinom() : Random sample from a binomial distribution
+4. rchisq() : Random sample from a Chi-squared distribution
+5. rpois() : Random sample from a Poisson distribution
+6. rf() : Random sample from an F distribution
+7. rlnorm() : Random sample from a lognormal distribution
+
+You should check out the documentation for each sampling function to determine the required arguments to supply to each one.  
+
+The goal of this lab is to "calibrate your intution" so you get a feel for how many samples you might need from different non-normal distributions so that the distribution of your sample means is normal.  
+
+
+### 1. Examining different distributions
+
+
+For the table below, each row should have one X at the smallest number of observations where the distributions of the sample means become normal (e.g. a single X at 5 for the Normal distribution).
+
+To fill in the rest of the table do the following:
+
+#### a. Plot the given population-level distributions and describe their shape as either "Symmetrical", "Left Skewed", or "Right Skewed" in the table. 
+
+#### b. For each of these distributions, draw 1000 samples of 5, 25, 50, and/or 100 observations. For each set of 1000 samples determine if the distribution of the means is normally distributed using QQ plots and the Shapiro-Wilk Statistic. The Shapiro-Wilk test is a	quantitative	way	to	assess	if	your	distribution	is	normally	distributed.  The null hypotehsis of this test is that your data are normally distributed.  The alternative hypothesis of this test is that your data are not normally distributed.  Therefore, if this test gives us a p-value that is non-significant (i.e. p > .05), we can be reasonably confident that our data are normal. 	Put an X in the cell where the distribution of sample means is normal. For example, the Normal distribution is "Symmetrical" and the sample means are normal after 5 samples so you put an X in the cell with 5 observations. Once you have placed one X for a given distribution you don't need to keep increasing the sample size. 
+
+
+```{r}
+# Make the dataframe for you to edit:
+dist_table <- data.frame(Distribution_Name=c("Normal", "Binomial", "Poisson", "Exponential", "Uniform", "LogNormal","Beta"), Shape_of_Pop=c(rep("",7)), Normal_5=c(rep("",7)),Normal_25=rep("",7),Normal_50=rep("",7),Normal_100=rep("",7),Normal_1000=rep("",7), stringsAsFactors = F)
+
+dist_table
+
+```
+
+
+Here's an example for normal data:
+
+```{r}
+
+# create the population -- however many you like!
+## No mean/SD = Assume mean/sD = 0/1
+Normal <- rnorm(200)
+hist(Normal)
+#if data is normal then the data will fall along the line 
+qqnorm(Normal);qqline(Normal)
+
+##Create qqplot with car package 
+## Confidence interval graphed, data between dashed line = 95% confidence interval 
+qqPlot(Normal)
+# the data are symmetrical
+
+# Edit the table:
+# Note, you can use the indices to edit the table. dist_table[1,2] corresponds to row 1, column 2.
+dist_table[1,2] <- "Symmetrical"
+
+# Now let's take 5 samples and calculate the means for each sample. We will use a loop here to illustrate the process, but it's better to use a function for large datasets (see below).
+
+mean_sample <- NULL
+for(i in 1:5){
+  temp_sample <- sample(Normal,5) # sample 5 randomly from population
+  mean_temp_sample <- mean(temp_sample) # calculate the mean of our sample
+  mean_sample <- c(mean_sample,mean_temp_sample) # add it to our vector of samples
+}
+mean_sample
+
+hist(mean_sample)
+qqnorm(mean_sample);qqline(mean_sample)
+qqPlot(mean_sample)
+
+# Fail to reject hypothesis that data is normal --> Nothing to disprove that the data IS normal 
+shapiro.test(mean_sample)
+
+dist_table[1,3] <- "X"
+
+dist_table
+```
+
+Now repeat for the remaining distributions with the following parameters (you don't need to do more for the normal distribution because we already achieved normality in the mean estimates)
+
+1. Binomial	Distribution	with	parameters:	Binomial	Trials =	40	and	Probability	of	success =	0.7	(Discrete	Distribution)
+2. Poisson	distribution	with	Mean =	2	(Discrete	Distribution)
+3. Exponential	Distribution	with	Rate =	3	(Continuous	Distribution)
+4. Uniform	Distribution	between	0	and	1	(Continuous	Distribution)
+5. Lognormal	Distribution	with	Mean	(log	scale) =	3.56	and	Standard	deviation	(log	scale) =	0.6765	(Continuous	Distribution)
+6. Beta	Distribution	with	Shape	1 =	5	and	Shape	2 =	1	(Continuous	Distribution)
+
+Example for Binomial distribution with the above parameters:
+```{r}
+# create the population -- however many you like!
+Binomial <- rbinom(1000, 40, 0.7)
+hist(Binomial)
+#Binomial distribution is discrete, not continuous --> Can't have half a success 
+qqnorm(Binomial);qqline(Binomial)
+# the data are symmetrical
+
+# Edit the table:
+# Note, you can use the indices to edit the table. dist_table[2,2] corresponds to row 2, column 2.
+dist_table[2,2] <- "Symmetrical"
+
+# Now let's take 5 samples and calculate the means for each sample. We will use a loop here to illustrate the process, but it's better to use a function for large datasets (see below).
+
+mean_sample <- NULL
+for(i in 1:5){
+  temp_sample <- sample(Binomial,5) # sample 5 randomly from population
+  mean_temp_sample <- mean(temp_sample) # calculate the mean of our sample
+  mean_sample <- c(mean_sample,mean_temp_sample) # add it to our vector of samples
+}
+mean_sample
+
+hist(mean_sample)
+qqPlot(mean_sample)
+
+shapiro.test(mean_sample)
+
+## p value is greater than 0.05. Cannot reject null hypothesis
+dist_table[2,4] <- " "
+
+dist_table
+```
+
+```{r}
+# create the population -- however many you like!
+Poisson <- rpois(1000, 2)
+hist(Poisson)
+#Poisson distribution is discrete, not continuous --> Can't have half a success 
+qqnorm(Poisson);qqline(Poisson)
+# the data are symmetrical
+
+# Edit the table:
+# Note, you can use the indices to edit the table. dist_table[2,2] corresponds to row 2, column 2.
+dist_table[3,2] <- "Right skewed"
+
+# Now let's take 5 samples and calculate the means for each sample. We will use a loop here to illustrate the process, but it's better to use a function for large datasets (see below).
+
+mean_sample <- NULL
+for(i in 1:5){
+  temp_sample <- sample(Poisson,5) # sample 5 randomly from population
+  mean_temp_sample <- mean(temp_sample) # calculate the mean of our sample
+  mean_sample <- c(mean_sample,mean_temp_sample) # add it to our vector of samples
+}
+mean_sample
+
+hist(mean_sample)
+qqPlot(mean_sample)
+
+shapiro.test(mean_sample)
+
+## p value is greater than 0.05. Cannot reject null hypothesis
+dist_table[3,3] <- "X"
+
+dist_table
+```
+
+```{r}
+# create the population -- however many you like!
+Exponential <- rexp(1000, 3)
+hist(Exponential)
+#Exponential distribution is discrete, not continuous --> Can't have half a success 
+qqnorm(Exponential);qqline(Exponential)
+# the data are symmetrical
+
+# Edit the table:
+# Note, you can use the indices to edit the table. dist_table[2,2] corresponds to row 2, column 2.
+dist_table[4,2] <- "Right skewed"
+
+# Now let's take 5 samples and calculate the means for each sample. We will use a loop here to illustrate the process, but it's better to use a function for large datasets (see below).
+
+mean_sample <- NULL
+for(i in 1:5){
+  temp_sample <- sample(Exponential,5) # sample 5 randomly from population
+  mean_temp_sample <- mean(temp_sample) # calculate the mean of our sample
+  mean_sample <- c(mean_sample,mean_temp_sample) # add it to our vector of samples
+}
+mean_sample
+
+hist(mean_sample)
+qqPlot(mean_sample)
+
+shapiro.test(mean_sample)
+
+## p value is greater than 0.05. Cannot reject null hypothesis
+dist_table[4,3] <- "X"
+
+dist_table
+```
+
+```{r}
+# create the population -- however many you like!
+Uniform <- runif(1000, 0, 1)
+hist(Uniform)
+#Uniform distribution is discrete, not continuous --> Can't have half a success 
+qqPlot(Uniform)
+# the data are symmetrical
+
+# Edit the table:
+# Note, you can use the indices to edit the table. dist_table[2,2] corresponds to row 2, column 2.
+dist_table[5,2] <- "Uniform"
+
+# Now let's take 5 samples and calculate the means for each sample. We will use a loop here to illustrate the process, but it's better to use a function for large datasets (see below).
+
+mean_sample <- NULL
+for(i in 1:5){
+  temp_sample <- sample(Uniform,5) # sample 5 randomly from population
+  mean_temp_sample <- mean(temp_sample) # calculate the mean of our sample
+  mean_sample <- c(mean_sample,mean_temp_sample) # add it to our vector of samples
+}
+mean_sample
+
+hist(mean_sample)
+qqPlot(mean_sample)
+
+shapiro.test(mean_sample)
+
+## p value is greater than 0.05. Cannot reject null hypothesis
+dist_table[5,3] <- "X"
+
+dist_table
+```
+3.56	and	Standard	deviation	(log	scale) =	0.6765
+```{r}
+# create the population -- however many you like!
+Log <- rlnorm(1000, 3.56, 0.6765)
+hist(Log)
+#Log distribution is discrete, not continuous --> Can't have half a success 
+qqPlot(Log)
+# the data are symmetrical
+
+# Edit the table:
+# Note, you can use the indices to edit the table. dist_table[2,2] corresponds to row 2, column 2.
+dist_table[6,2] <- "Right skewed"
+
+# Now let's take 5 samples and calculate the means for each sample. We will use a loop here to illustrate the process, but it's better to use a function for large datasets (see below).
+
+mean_sample <- NULL
+for(i in 1:25){
+  temp_sample <- sample(Log,25) # sample 5 randomly from population
+  mean_temp_sample <- mean(temp_sample) # calculate the mean of our sample
+  mean_sample <- c(mean_sample,mean_temp_sample) # add it to our vector of samples
+}
+mean_sample
+
+hist(mean_sample)
+qqPlot(mean_sample)
+
+shapiro.test(mean_sample)
+
+## p value is greater than 0.05. Cannot reject null hypothesis
+dist_table[6,4] <- "X"
+
+dist_table
+```
+
+6. Beta	Distribution	with	Shape	1 =	5	and	Shape	2 =	1	(Continuous	Distribution)
+```{r}
+# create the population -- however many you like!
+Beta <- rbeta(1000, 5, 1)
+hist(Beta)
+#Beta distribution is discrete, not continuous --> Can't have half a success 
+qqPlot(Beta)
+# the data are symmetrical
+
+# Edit the table:
+# Note, you can use the indices to edit the table. dist_table[2,2] corresponds to row 2, column 2.
+dist_table[7,2] <- "Left skewed"
+
+# Now let's take 5 samples and calculate the means for each sample. We will use a loop here to illustrate the process, but it's better to use a function for large datasets (see below).
+
+mean_sample <- NULL
+for(i in 1:5){
+  temp_sample <- sample(Beta,5) # sample 5 randomly from population
+  mean_temp_sample <- mean(temp_sample) # calculate the mean of our sample
+  mean_sample <- c(mean_sample,mean_temp_sample) # add it to our vector of samples
+}
+mean_sample
+
+hist(mean_sample)
+qqPlot(mean_sample)
+
+shapiro.test(mean_sample)
+
+## p value is greater than 0.05. Cannot reject null hypothesis
+dist_table[7,3] <- "X"
+
+dist_table
+```
+#### c. Look at your above table and answer the following question: You have an ecologist friend who is doing a study looking at the average neck lengths of Blue Herons in the Goleta Slough. She samples 15 herons and finds that the distribution is highly right skewed. Do you think she can use a statistical test that assumes normality to determine whether the mean Blue Heron neck length is significantly longer than 20 inches? Why or why not? 
+Based on the table she needs to sample more herons in order to use a statistical test that assumes normal distribution. 
+
+### Exercise 2: Bizarre distributions vs. CLT
+
+Import some weird data and check normality.
+
+
+```{r}
+# Read in the weird data
+weird <- read.csv("weird_data.csv")
+hist(weird$X)
+ggplot(weird, aes(x=X))+
+  geom_histogram(bindwith=20)
+
+# use the qqPlot function in car package
+library(car)
+qqPlot(weird$X)
+shapiro.test(weird$X)
+
+```
+
+```{r}
+# Sampling using a function
+length(weird$X)
+# You can change this to alter the number of observations in each sample
+NUM_OBS <- 2000
+
+get_mean <- function(num_samp){
+  mean(sample(weird$X, num_samp))
+}
+
+samp_means = matrix(sapply(rep(NUM_OBS, 1000), get_mean))
+hist(samp_means)
+
+shapiro.test(samp_means)
+
+```
+
+
+Based on what you learned in exercise 1 and the histogram of the bizarre data, predict how many samples it will take from this bizarre population distribution such that the distribution of sample means is normally distributed. 
+Then, determine approximately how many samples would be required to achieve a normal distribution of the sample means by adjusting the variable NUM_OBS and re-running the code. How many? Is this more, less, or equal to what you predicted and (briefly) why? 
+
+Provide the histogram and the Shapiro-Wilk p-value for the mean sample distribution that you considered normal.
+
+### Exercise 3: Build your own beast 
+
+Go to the website http://onlinestatbook.com/stat_sim/sampling_dist/, read the instructions and click Begin in the upper left hand corner.
+
+Click on the button that says Normal and change to Custom. Move your mouse over the first plot and you can make any distribution you want! Play around with some crazy distributions and try sampling them. Does the central limit theorem hold?
+
+#### Based on the knowledge you have gained in the above exercises, build a distribution whose distribution of sample means will not converge on a normal distribution after 16 samples (i.e. with "N=16"). As a rough criteria, try to get the skew in the "Distribution of Means, N=16" to be greater than |0.3| after taking 10,000 samples. 
+
+
+Take a screenshot of the distribution you make. Congratulations, you have created a beast! 
+
+### Exercise 4: Dexterity
+Complete this exercise to generate data that you will use for homework 2
+
+* Partner up. Get a piece of paper and a pencil and load up the stopwatch app on your phone.  
+* Have your partner time how long it takes you to legibly write "the search for the truth" with your dominant hand and your weak hand.  
+* Record the data and report it to your TA. I will compile it and put it in Gauchospace as *section#_dexterity.csv* before the end of lab.  
+
